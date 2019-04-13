@@ -1,0 +1,3 @@
+[console_scripts]
+oops-amqp-trace = oops_amqp.trace:main
+
