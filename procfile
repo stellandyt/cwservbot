@@ -1,1 +1,1 @@
-web: python3 botCS.py
+worker: python3 botCS.py $PORT
