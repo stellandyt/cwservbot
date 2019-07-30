@@ -1,107 +1,103 @@
 import telebot
-import pymysql
-# from telebot import types
-import requests
-from flask import Flask, request
-import os
+import pyowm
+# import logging
+# from flask import Flask, request
+# import os
+from telebot import types
 
-bot = telebot.TeleBot("824295335:AAGK4j81vjcKoRsNd_1mWOwMPafNRfhWqhY")
-server = Flask(__name__)
-asd = False
+token = "767640365:AAGLF3nApdXdsJUYXMC-V5VDRIiMaLYoGN8"
+tokenOWM = "c687e4132128127329716ffed7313e70"
 
+bot = telebot.TeleBot(token)
+owm = pyowm.OWM(tokenOWM, language='ru')
+
+aaa = False
+city = ""
+
+@bot.message_handler(commands=['start'])
+def Start_bot(message):
+    bot.send_message(
+        message.chat.id,
+        'Привет! :)\nИспользуй: /help,\nчтобы узнать список доступных команд!.\n'
+    )
+
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(
+            'Создатель', url='telegram.me/Stelland'
+  )
+    )
+    bot.send_message(
+        message.chat.id,
+        '1) Хочешь узнать погоду в своём городе? Напиши просто название города, и узнай температуру! Всё просто :).\n' +
+        '2) Раз, два, три.\n' +
+        '3) Ещё текст',
+        reply_markup=keyboard
+    )
+
+@bot.message_handler(commands=['vk'])
+def vk_sozdatelya(message):
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(
+            'Жмякай', url='vk.com/stelland'
+        )
+    )
+    bot.send_message(
+        message.chat.id,
+        'Создатель есть и Вконтакте :)',
+        reply_markup=keyboard
+    )
+
+@bot.message_handler(commands=["geophone"])
+def geophone(message):
+    # Эти параметры для клавиатуры необязательны, просто для удобства
+    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_phone = types.KeyboardButton(text="Узнать свой номер телефона", request_contact=True)
+    button_geo = types.KeyboardButton(text="Узнать своё местоположение", request_location=True)
+    btn_back = types.KeyboardButton(text='Назад')
+
+    keyboard.add(button_phone, button_geo)
+    keyboard.add(btn_back)
+
+    bot.send_message(message.chat.id, "Отправь мне свой номер телефона или поделись местоположением, жалкий человечишка!", reply_markup=keyboard)
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    global asd
-    if message.text == '/start':
-        conn = pymysql.connect('91.134.194.237', 'gs9966', 'STelland3102YT', 'gs9966')
-        cursor = conn.cursor()
-        name = message.from_user.id
-        print(name)
-        query = "SELECT api_key from users WHERE user_id=%s "
-        args = (str(name))
-        cursor.execute(query, args)
-        row = cursor.fetchone()
-        print(row)
-        conn.close()
-        if row != None:
-            api_key = str(row[0])
-            servstop = "https://cw-serv.ru/api/key/%s/action/start" % api_key
-            print(servstop)
-            print(api_key)
-            requests.post(servstop)
-            # markup = types.InlineKeyboardMarkup()
-            # btn_my_site = types.InlineKeyboardButton(text='Наш сайт', url=api_key)
-            # markup.add(btn_my_site)
-            # bot.send_message(message.chat.id, "Нажми на кнопку и перейди на наш сайт.", reply_markup=markup)
-        elif asd == False:
-            bot.send_message(message.from_user.id, "Введите api key: ")
-            asd = True
-            print(asd)
-    elif message.text == '/stop':
-        conn = pymysql.connect('91.134.194.237', 'gs9966', 'STelland3102YT', 'gs9966')
-        cursor = conn.cursor()
-        name = message.from_user.id
-        print(name)
-        query = "SELECT api_key from users WHERE user_id=%s "
-        args = (str(name))
-        cursor.execute(query, args)
-        row = cursor.fetchone()
-        print(row)
-        conn.close()
-        if row != None:
-            api_key = str(row[0])
-            servstop = "https://cw-serv.ru/api/key/%s/action/stop" % api_key
-            print(servstop)
-            print(api_key)
-            requests.post(servstop)
+    # global aaa, city
+    # bot.send_message(message.chat.id, "Введите город/страну!")
+    city = message.text
+    aaa = True
 
-    elif message.text == '/status':
-        conn = pymysql.connect('91.134.194.237', 'gs9966', 'STelland3102YT', 'gs9966')
-        cursor = conn.cursor()
-        name = message.from_user.id
-        print(name)
-        query = "SELECT api_key from users WHERE user_id=%s "
-        args = (str(name))
-        cursor.execute(query, args)
-        row = cursor.fetchone()
-        print(row)
-        conn.close()
-        if row != None:
-            api_key = str(row[0])
-            servstat = "https://cw-serv.ru/api/key/%s/action/data" % api_key
-            print(servstat)
-            print(api_key)
-            r = requests.get(servstat)
-            ntext = str(r.json())
-            newtext = ntext.replace(',', '\n')
-            print(newtext)
-            bot.send_message(message.from_user.id, newtext)
-    elif asd == True:
-        conn = pymysql.connect('91.134.194.237', 'gs9966', 'STelland3102YT', 'gs9966')
-        cursor = conn.cursor()
-        name = message.from_user.id
-        print(name)
-        query = "INSERT INTO `users` (`user_id`, `api_key`) VALUES (%s, %s) "
-        args = (str(name), str(message.text))
-        print(args)
-        cursor.execute(query, args)
-        conn.commit()
-        conn.close()
-        print(message.text)
-        asd = False
-        print(asd)
+    if aaa == True:
+        try:
+            observation = owm.weather_at_place(city)
+            w = observation.get_weather()
+            temp = w.get_temperature('celsius')["temp"]
+
+            answer = "В г." + city + ',' + " сейчас: " + '\n--> ' + w.get_detailed_status() + ' <--' + "\n"
+            answer += "Температура сейчас, в районе: " + str(temp) + " °C"
+
+            bot.send_message(message.from_user.id, answer)
+            print(answer)
+            asd = False
+
+        except pyowm.exceptions.api_response_error.NotFoundError:
+            bot.send_message(message.from_user.id, "Я тебя не понимаю :(", reply_markup=keyboard())
 
 
-@server.route('/')
-def webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url='https://quiet-crag-65971.herokuapp.com/')
-    return "!", 200
 
+def keyboard():
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    btn1 = types.KeyboardButton('/help')
+    btn2 = types.KeyboardButton('/vk')
+    btn3 = types.KeyboardButton('/geophone')
 
-if __name__ == "__name__":
-    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
+    markup.add(btn1, btn2)
+    markup.add(btn3)
+    return markup
 
 
 bot.polling(none_stop=True, interval=0)
