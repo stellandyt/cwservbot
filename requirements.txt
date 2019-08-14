@@ -1,5 +1,6 @@
 Telebot
-pymysql
 requests
 pyTelegramBotApi
-flask
+PySocks
+gunicorn
+urllib3
